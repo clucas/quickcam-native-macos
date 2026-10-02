@@ -1,0 +1,19 @@
+QuickCam Native and Legacy QuickCam use more than one license.
+
+The new application, bridge, output adapter, build scripts, tests, and
+documentation outside vendor/ are available under the MIT License in
+LICENSE-MIT, except for files that contain or reproduce another license.
+The pyvirtualcam-derived output adapter retains its upstream MIT notices.
+
+The vendor/macam64 tree retains its upstream licenses and copyright notices.
+Its driver implementation is GNU GPL version 2 or, where stated in its source,
+any later version. See vendor/macam64/COPYING.txt and individual source files.
+
+The QuickCam Native extension and Legacy QuickCam executable link the GPL
+drivers. These combined works are distributed under the GNU General Public
+License, version 2 or any later version. The complete corresponding source is
+included in this repository. See COPYING for the GPL version 2 text.
+
+OBS Studio and its signed camera extension are separate dependencies. They
+are obtained from OBS's official distribution and are not included in the
+source repository.

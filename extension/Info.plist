@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>QuickCamCamera</string>
+    <key>CFBundleIdentifier</key><string>local.quickcam.Native.CameraExtension</string>
+    <key>CFBundleName</key><string>QuickCam Camera Extension</string>
+    <key>CFBundlePackageType</key><string>SYSX</string>
+    <key>CFBundleShortVersionString</key><string>0.2.2</string>
+    <key>CFBundleVersion</key><string>4</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>NSSystemExtensionUsageDescription</key><string>Provide camera video from your USB-connected Logitech QuickCam Pro 4000 and Communicate STX.</string>
+    <key>CMIOExtension</key><dict>
+        <key>CMIOExtensionMachServiceName</key><string>local.quickcam.Native.CameraExtension</string>
+    </dict>
+</dict></plist>

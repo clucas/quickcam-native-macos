@@ -1,0 +1,29 @@
+QuickCam Native / Legacy QuickCam — third-party notices
+
+New application and bridge code
+Copyright (c) 2026 Christophe Lucas
+Available under the MIT License; see LICENSE-MIT.
+The combined application links GPL camera drivers and is distributed under
+GPL version 2 or any later version. See COPYING.txt and LICENSE for scope.
+
+macam64
+Source: https://github.com/smokris/macam64
+Native USB camera protocols, decompression, and supporting camera classes.
+Copyright notices and license terms remain in the accompanying source files.
+See COPYING.txt for the GNU General Public License, version 2.
+
+pyvirtualcam CMIO extension output
+Source release: v0.15.0
+Source file: pyvirtualcam/native_macos_obs_cmioextension/virtual_output.hpp
+https://github.com/letmaik/pyvirtualcam/blob/v0.15.0/pyvirtualcam/native_macos_obs_cmioextension/virtual_output.hpp
+Copyright (C) 2025 Sebastian Beckmann
+Copyright (C) 2021 Jannik Vogel
+
+host/QCObsOutput.m adapts this file's OBS device discovery and CoreMediaIO
+output queue interface. The source file explicitly grants the MIT license,
+although the pyvirtualcam repository's overall license is GPL version 2.
+See LICENSE-pyvirtualcam-MIT.txt for the complete file-specific license.
+No pyvirtualcam Python binding or libyuv source is included in this adapter.
+
+This software is supplied without warranty. Original notices are preserved in
+the source package. The software is not an official Logitech product.

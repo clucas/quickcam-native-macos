@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>QuickCamNative</string>
+    <key>CFBundleIdentifier</key><string>local.quickcam.Native</string>
+    <key>CFBundleName</key><string>QuickCam Native</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>0.2.2</string>
+    <key>CFBundleVersion</key><string>4</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>QuickCamExtensionIdentifier</key><string>local.quickcam.Native.CameraExtension</string>
+    <key>NSSystemExtensionUsageDescription</key><string>Install camera support for your Logitech QuickCam Pro 4000 and Communicate STX.</string>
+</dict></plist>
