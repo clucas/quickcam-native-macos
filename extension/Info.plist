@@ -6,8 +6,8 @@
     <key>CFBundleIdentifier</key><string>local.quickcam.Native.CameraExtension</string>
     <key>CFBundleName</key><string>QuickCam Camera Extension</string>
     <key>CFBundlePackageType</key><string>SYSX</string>
-    <key>CFBundleShortVersionString</key><string>0.3.0</string>
-    <key>CFBundleVersion</key><string>5</string>
+    <key>CFBundleShortVersionString</key><string>0.4.0</string>
+    <key>CFBundleVersion</key><string>6</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSSystemExtensionUsageDescription</key><string>Provide camera video from your USB-connected Logitech QuickCam Pro 4000 and Communicate STX.</string>
     <key>CMIOExtension</key><dict>

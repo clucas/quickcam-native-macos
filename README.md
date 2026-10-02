@@ -1,6 +1,6 @@
 # QuickCam Native for macOS
 
-QuickCam Native 0.3.0 makes two older Logitech USB webcams available as separate cameras to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
+QuickCam Native 0.4.0 makes two older Logitech USB webcams available as separate cameras and named microphones to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
 
 This repository contains source code and build instructions. It does not include signed apps, certificates, provisioning profiles, or developer-account configuration. To install the native extension, build and sign it with your own Apple Developer Program account.
 
@@ -9,7 +9,7 @@ This repository contains source code and build instructions. It does not include
 | `046d:08b2` | Logitech QuickCam Pro 4000 | Philips/PWC, `MyKiaraFamilyDriver` |
 | `046d:08d7` | Logitech QuickCam Communicate STX | ZC030x/GSPCA, `ZC030xDriverMic` |
 
-The USB allowlist contains exactly these two IDs. Other cameras, including the Logitech C270, are not opened by this driver. Both supported cameras provide **640 × 480 video at 5 frames per second**. Microphone audio is not captured; select an audio input separately in your video app.
+The USB allowlist contains exactly these two IDs. Other cameras, including the Logitech C270, are not opened by this driver. Both supported cameras provide **640 × 480 video at 5 frames per second**. Camera and microphone selection are separate in video apps.
 
 For the Pro 4000, the activity light follows capture. On each USB connection, the extension also briefly claims the idle video interface to turn the light off without capturing frames. A brief power-on flash can occur before macOS detects the camera. The idle operation skips cameras whose USB interface is already in use.
 
@@ -42,7 +42,7 @@ bash scripts/build-extension.sh
 
 Leave `QUICKCAM_ARCHS` unset, or set it to `arm64 x86_64`, for a universal build. Build the driver library again after changing architectures.
 
-Without signing settings, the result is an inspection build at `build/QuickCam Native.app`. Its installation button is disabled. An ad hoc signature does not satisfy system-extension activation requirements.
+Without signing settings, the result is an inspection build at `build/QuickCam Native.app`. Its camera installation button is disabled. An ad hoc signature does not satisfy system-extension activation requirements.
 
 For an installable build, register your own host App ID with System Extension capability and create its Developer ID provisioning profile. Keep signing material outside this repository. Replace the placeholders below with your own values:
 
@@ -62,6 +62,21 @@ Reopen your video app to refresh its camera list. Each connected supported webca
 
 The native extension runs in user space. It does not install a kernel driver, replace Apple's camera drivers, or require disabling SIP. Quit the optional Legacy QuickCam preview app before using native camera entries: both use the same USB interfaces.
 
+## Microphones
+
+Both cameras contain a mono microphone. macOS already supports their USB audio interfaces, but can label them both **Unknown USB Audio Device**. QuickCam Native adds a separate, named Core Audio aggregate device for each microphone using Apple's existing audio driver.
+
+Connect the cameras, open **QuickCam Native**, and click **Set Up Microphones**. In Zoom's microphone menu or Google Meet's audio settings, select:
+
+- **QuickCam Pro 4000 Microphone**
+- **QuickCam Communicate STX Microphone**
+
+Allow microphone access for the calling app when macOS prompts. The setup app does not record audio. Each named input contains only its corresponding physical microphone. Setup leaves the default input, speakers, and other microphones unchanged. The original generic USB audio entries remain available.
+
+You can close QuickCam Native after setup. The named inputs remain in Core Audio, and retain their source when it disconnects. Reconnect to the same USB port on the same dock. Moving these serial-less cameras to another port can change their audio device UID; run setup again to add the new input. **Remove Microphone Names** removes only the single-device inputs created by QuickCam Native; it does not uninstall Apple's USB audio support.
+
+The Pro 4000 supports up to 44.1 kHz audio; the STX supports up to 16 kHz. Your calling app controls recording and chooses the format. The camera activity light indicates video capture, not microphone access.
+
 ## Tests
 
 Run synthetic tests without opening cameras:
@@ -69,6 +84,7 @@ Run synthetic tests without opening cameras:
 ```sh
 bash scripts/test-driver.sh
 bash scripts/test-extension.sh
+bash scripts/test-microphones.sh
 ```
 
 Tests run for the host processor by default. On an Apple silicon Mac with Rosetta installed, run the Intel tests with:
@@ -76,6 +92,7 @@ Tests run for the host processor by default. On an Apple silicon Mac with Rosett
 ```sh
 QUICKCAM_TEST_ARCH=x86_64 bash scripts/test-driver.sh
 QUICKCAM_TEST_ARCH=x86_64 bash scripts/test-extension.sh
+QUICKCAM_TEST_ARCH=x86_64 bash scripts/test-microphones.sh
 ```
 
 These tests verify Intel code through translation; they do not replace hardware testing on an Intel Mac.
@@ -83,6 +100,8 @@ These tests verify Intel code through translation; they do not replace hardware 
 Run the driver suites one at a time. They rebuild the driver library for the selected test architecture. Before packaging a universal app, rerun `bash scripts/build-driver.sh` with `QUICKCAM_ARCHS` unset.
 
 These cover the USB allowlist, hotplug registration, capture lifecycle, concurrent shutdown and registry access, reconnect recovery, activity-light control, exclusive USB ownership, pixel conversion, and buffer boundaries.
+
+Microphone tests cover model matching, repeated setup, and safe ownership checks before removal. They do not open an audio input. After microphone setup, run `bash scripts/verify-audio.sh` to check live audio from the two named inputs. The verifier reports received frames and signal levels in memory; it saves no audio. Use `--physical` to check the original USB inputs or `--build-only` to compile without microphone access.
 
 After activating the extension, verify both native camera entries:
 
@@ -130,7 +149,7 @@ To check the shared OBS feed, start sharing and run `bash scripts/verify-video.s
 - `vendor/macam64/`: camera protocols, decoders, and driver support for 64-bit macOS.
 - `src/QuickCamCapture.m` and `extension/QuickCamCapture.h`: C capture API over the IOKit USB drivers.
 - `extension/`: CoreMediaIO devices, capture demand, reconnect handling, and frame delivery.
-- `host/main.swift`: native extension installation and removal.
+- `host/`: native extension installation, named microphone setup, and removal.
 - `preview/main.m` and `host/QCObsOutput.m`: optional previews and OBS output adapter.
 - `scripts/` and `tests/`: builds, synthetic tests, and hardware verification.
 

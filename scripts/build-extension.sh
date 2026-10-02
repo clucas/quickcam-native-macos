@@ -61,8 +61,10 @@ for architecture in "${quickcam_archs[@]}"; do
     -framework CoreMediaIO -framework Cocoa -framework IOKit -framework Carbon \
     -o "$architecture_dir/QuickCamCamera"
   xcrun swiftc -swift-version 5 -target "$architecture-apple-macos13.0" -O \
-    -module-cache-path "$build_dir/swift-cache/$architecture" "$project_dir/host/main.swift" \
-    -framework AppKit -framework SystemExtensions -o "$architecture_dir/QuickCamNative"
+    -module-cache-path "$build_dir/swift-cache/$architecture" \
+    "$project_dir/host/QuickCamMicrophones.swift" "$project_dir/host/main.swift" \
+    -framework AppKit -framework SystemExtensions -framework CoreAudio \
+    -o "$architecture_dir/QuickCamNative"
   extension_binaries+=("$architecture_dir/QuickCamCamera")
   host_binaries+=("$architecture_dir/QuickCamNative")
 done

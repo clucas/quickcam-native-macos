@@ -5,12 +5,26 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, OSSystemExtens
     private var window: NSWindow!
     private let status = NSTextField(wrappingLabelWithString:
         "Install camera support to use the QuickCam Pro 4000 and Communicate STX in camera apps.")
+    private let microphoneStatus = NSTextField(wrappingLabelWithString: "")
     private var activeRequest: OSSystemExtensionRequest?
     private var extensionIdentifier: String {
         Bundle.main.object(forInfoDictionaryKey: "QuickCamExtensionIdentifier") as! String
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        for (argument, operation) in [
+            ("--setup-microphones", QuickCamMicrophones.setUp),
+            ("--remove-microphones", QuickCamMicrophones.remove),
+            ("--microphone-status", QuickCamMicrophones.status)
+        ] where CommandLine.arguments.contains(argument) {
+            do {
+                print(try operation())
+                exit(0)
+            } catch {
+                fputs("Microphone support: \(error.localizedDescription)\n", stderr)
+                exit(1)
+            }
+        }
         let appMenu = NSMenu()
         let applicationItem = NSMenuItem()
         let applicationMenu = NSMenu()
@@ -19,13 +33,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, OSSystemExtens
         appMenu.addItem(applicationItem)
         NSApp.mainMenu = appMenu
 
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 280),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 460),
             styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "QuickCam Native"
-        let title = NSTextField(labelWithString: "Legacy QuickCam camera support")
+        let title = NSTextField(labelWithString: "Legacy QuickCam support")
         title.font = .boldSystemFont(ofSize: 20)
         status.maximumNumberOfLines = 0
-        status.preferredMaxLayoutWidth = 500
+        status.preferredMaxLayoutWidth = 560
         let install = NSButton(title: "Install Camera Support", target: self, action: #selector(activate))
         install.bezelStyle = .rounded
         let uninstall = NSButton(title: "Remove Camera Support", target: self, action: #selector(deactivate))
@@ -37,10 +51,30 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, OSSystemExtens
         }
         let buttons = NSStackView(views: [install, uninstall])
         buttons.orientation = .horizontal
-        let content = NSStackView(views: [title, status, buttons])
+        let separator = NSBox()
+        separator.boxType = .separator
+        let microphoneTitle = NSTextField(labelWithString: "Microphones")
+        microphoneTitle.font = .boldSystemFont(ofSize: 16)
+        microphoneStatus.maximumNumberOfLines = 0
+        microphoneStatus.preferredMaxLayoutWidth = 560
+        microphoneStatus.stringValue = (try? QuickCamMicrophones.status()) ??
+            "Connect your QuickCam microphones, then click Set Up Microphones."
+        let setUpMicrophones = NSButton(title: "Set Up Microphones", target: self,
+            action: #selector(setUpAudio))
+        let removeMicrophones = NSButton(title: "Remove Microphone Names", target: self,
+            action: #selector(removeAudio))
+        setUpMicrophones.bezelStyle = .rounded
+        removeMicrophones.bezelStyle = .rounded
+        let microphoneButtons = NSStackView(views: [setUpMicrophones, removeMicrophones])
+        microphoneButtons.orientation = .horizontal
+        let audioHelp = NSTextField(wrappingLabelWithString:
+            "Select each QuickCam microphone separately in your video app. You can close QuickCam Native after setup.")
+        audioHelp.preferredMaxLayoutWidth = 560
+        let content = NSStackView(views: [title, status, buttons, separator,
+            microphoneTitle, microphoneStatus, microphoneButtons, audioHelp])
         content.orientation = .vertical
         content.alignment = .leading
-        content.spacing = 22
+        content.spacing = 16
         content.translatesAutoresizingMaskIntoConstraints = false
         window.contentView!.addSubview(content)
         NSLayoutConstraint.activate([
@@ -53,6 +87,16 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, OSSystemExtens
         NSApp.activate(ignoringOtherApps: true)
         if CommandLine.arguments.contains("--activate") { activate() }
         if CommandLine.arguments.contains("--deactivate") { deactivate() }
+    }
+
+    @objc private func setUpAudio() {
+        do { microphoneStatus.stringValue = try QuickCamMicrophones.setUp() }
+        catch { microphoneStatus.stringValue = "Microphone setup failed: \(error.localizedDescription)" }
+    }
+
+    @objc private func removeAudio() {
+        do { microphoneStatus.stringValue = try QuickCamMicrophones.remove() }
+        catch { microphoneStatus.stringValue = "Microphone removal failed: \(error.localizedDescription)" }
     }
 
     @objc private func activate() {
