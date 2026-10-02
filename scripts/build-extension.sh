@@ -36,6 +36,7 @@ app_dir="$staging_dir/QuickCam Native.app"
 extension_dir="$app_dir/Contents/Library/SystemExtensions/$extension_id.systemextension"
 mkdir -p "$app_dir/Contents/MacOS" "$extension_dir/Contents/MacOS"
 mkdir -p "$app_dir/Contents/Resources" "$extension_dir/Contents/Resources"
+cp "$project_dir/host/AppIcon.icns" "$app_dir/Contents/Resources/"
 for resource_dir in "$app_dir/Contents/Resources" "$extension_dir/Contents/Resources"; do
   cp "$project_dir/host/COPYING.txt" "$project_dir/host/NOTICE.txt" \
     "$project_dir/host/LICENSE-pyvirtualcam-MIT.txt" "$resource_dir/"

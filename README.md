@@ -1,6 +1,6 @@
 # QuickCam Native for macOS
 
-QuickCam Native 0.4.0 makes two older Logitech USB webcams available as separate cameras and named microphones to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
+QuickCam Native 0.4.1 makes two older Logitech USB webcams available as separate cameras and named microphones to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
 
 This repository contains source code and build instructions. It does not include signed apps, certificates, provisioning profiles, or developer-account configuration. To install the native extension, build and sign it with your own Apple Developer Program account.
 
@@ -150,6 +150,7 @@ To check the shared OBS feed, start sharing and run `bash scripts/verify-video.s
 - `src/QuickCamCapture.m` and `extension/QuickCamCapture.h`: C capture API over the IOKit USB drivers.
 - `extension/`: CoreMediaIO devices, capture demand, reconnect handling, and frame delivery.
 - `host/`: native extension installation, named microphone setup, and removal.
+- `host/AppIcon.svg` and `host/AppIcon.icns`: editable artwork and the packaged app icon. To regenerate the icon, install `librsvg` and run `bash scripts/build-icon.sh`; normal builds use the included icon.
 - `preview/main.m` and `host/QCObsOutput.m`: optional previews and OBS output adapter.
 - `scripts/` and `tests/`: builds, synthetic tests, and hardware verification.
 
