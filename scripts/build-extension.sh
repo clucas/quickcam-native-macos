@@ -2,6 +2,8 @@
 set -euo pipefail
 
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$project_dir/scripts/architectures.sh"
+quickcam_build_architectures
 build_dir="$project_dir/build"
 output_app="$build_dir/QuickCam Native.app"
 bundle_id="${QUICKCAM_BUNDLE_ID:-org.example.QuickCamNative}"
@@ -25,13 +27,14 @@ if [[ ! -f "$build_dir/libmacam64.a" || ! -f "$project_dir/src/QuickCamCapture.m
   printf '%s\n' 'Build the native capture library and provide src/QuickCamCapture.m first.' >&2
   exit 1
 fi
+quickcam_require_architectures "$build_dir/libmacam64.a"
 
 mkdir -p "$build_dir"
 staging_dir="$(mktemp -d "$build_dir/native-stage.XXXXXX")"
 trap 'rm -rf "$staging_dir"' EXIT
 app_dir="$staging_dir/QuickCam Native.app"
 extension_dir="$app_dir/Contents/Library/SystemExtensions/$extension_id.systemextension"
-mkdir -p "$app_dir/Contents/MacOS" "$extension_dir/Contents/MacOS" "$build_dir/swift-cache"
+mkdir -p "$app_dir/Contents/MacOS" "$extension_dir/Contents/MacOS"
 mkdir -p "$app_dir/Contents/Resources" "$extension_dir/Contents/Resources"
 for resource_dir in "$app_dir/Contents/Resources" "$extension_dir/Contents/Resources"; do
   cp "$project_dir/host/COPYING.txt" "$project_dir/host/NOTICE.txt" \
@@ -39,22 +42,32 @@ for resource_dir in "$app_dir/Contents/Resources" "$extension_dir/Contents/Resou
   cp "$project_dir/LICENSE" "$project_dir/LICENSE-MIT" "$resource_dir/"
 done
 source_dir="$project_dir/vendor/macam64"
-xcrun clang -arch arm64 -mmacosx-version-min=13.0 -std=gnu11 -fblocks -fno-objc-arc -O2 -g \
-  -DMACAM=1 -Wno-deprecated-declarations -Wno-objc-method-access \
-  -I"$project_dir/extension" -I"$source_dir/driver_core" \
-  -I"$source_dir/utilities" -I"$source_dir/cameras" -I"$source_dir/app_specific" \
-  -c "$project_dir/src/QuickCamCapture.m" -o "$build_dir/QuickCamCapture-extension.o"
-xcrun swiftc -swift-version 5 -target arm64-apple-macos13.0 -O \
-  -module-cache-path "$build_dir/swift-cache" \
-  -import-objc-header "$project_dir/extension/QuickCamCapture.h" \
-  "$project_dir/extension/FrameConversion.swift" \
-  "$project_dir/extension/QuickCamProvider.swift" "$project_dir/extension/main.swift" \
-  "$build_dir/QuickCamCapture-extension.o" "$build_dir/libmacam64.a" \
-  -framework CoreMediaIO -framework Cocoa -framework IOKit -framework Carbon \
-  -o "$extension_dir/Contents/MacOS/QuickCamCamera"
-xcrun swiftc -swift-version 5 -target arm64-apple-macos13.0 -O \
-  -module-cache-path "$build_dir/swift-cache" "$project_dir/host/main.swift" \
-  -framework AppKit -framework SystemExtensions -o "$app_dir/Contents/MacOS/QuickCamNative"
+extension_binaries=()
+host_binaries=()
+for architecture in "${quickcam_archs[@]}"; do
+  architecture_dir="$build_dir/extension/$architecture"
+  mkdir -p "$architecture_dir" "$build_dir/swift-cache/$architecture"
+  xcrun clang -arch "$architecture" -mmacosx-version-min=13.0 -std=gnu11 -fblocks -fno-objc-arc -O2 -g \
+    -DMACAM=1 -Wno-deprecated-declarations -Wno-objc-method-access \
+    -I"$project_dir/extension" -I"$source_dir/driver_core" \
+    -I"$source_dir/utilities" -I"$source_dir/cameras" -I"$source_dir/app_specific" \
+    -c "$project_dir/src/QuickCamCapture.m" -o "$architecture_dir/QuickCamCapture.o"
+  xcrun swiftc -swift-version 5 -target "$architecture-apple-macos13.0" -O \
+    -module-cache-path "$build_dir/swift-cache/$architecture" \
+    -import-objc-header "$project_dir/extension/QuickCamCapture.h" \
+    "$project_dir/extension/FrameConversion.swift" \
+    "$project_dir/extension/QuickCamProvider.swift" "$project_dir/extension/main.swift" \
+    "$architecture_dir/QuickCamCapture.o" "$build_dir/libmacam64.a" \
+    -framework CoreMediaIO -framework Cocoa -framework IOKit -framework Carbon \
+    -o "$architecture_dir/QuickCamCamera"
+  xcrun swiftc -swift-version 5 -target "$architecture-apple-macos13.0" -O \
+    -module-cache-path "$build_dir/swift-cache/$architecture" "$project_dir/host/main.swift" \
+    -framework AppKit -framework SystemExtensions -o "$architecture_dir/QuickCamNative"
+  extension_binaries+=("$architecture_dir/QuickCamCamera")
+  host_binaries+=("$architecture_dir/QuickCamNative")
+done
+xcrun lipo -create "${extension_binaries[@]}" -output "$extension_dir/Contents/MacOS/QuickCamCamera"
+xcrun lipo -create "${host_binaries[@]}" -output "$app_dir/Contents/MacOS/QuickCamNative"
 
 /usr/bin/python3 - "$project_dir" "$app_dir" "$extension_dir" "$bundle_id" "$team_id" "$signing_identity" "$staging_dir" <<'PY'
 import datetime

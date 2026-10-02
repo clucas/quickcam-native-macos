@@ -6,8 +6,8 @@
     <key>CFBundleIdentifier</key><string>local.quickcam.Native</string>
     <key>CFBundleName</key><string>QuickCam Native</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.2.2</string>
-    <key>CFBundleVersion</key><string>4</string>
+    <key>CFBundleShortVersionString</key><string>0.3.0</string>
+    <key>CFBundleVersion</key><string>5</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>QuickCamExtensionIdentifier</key><string>local.quickcam.Native.CameraExtension</string>

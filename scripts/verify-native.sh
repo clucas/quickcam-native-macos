@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$project_dir/scripts/architectures.sh"
+quickcam_build_architectures
 usage() {
   printf '%s\n' 'Usage: verify-native.sh --build-only | [08b2|08d7] [--snapshot-dir DIRECTORY]' >&2
   exit 2
@@ -35,7 +37,7 @@ done
 verification_app="$project_dir/build/QuickCam Native Verification.app"
 verification_binary="$verification_app/Contents/MacOS/QuickCam Native Verification"
 mkdir -p "$verification_app/Contents/MacOS"
-xcrun clang -arch arm64 -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
+xcrun clang "${quickcam_arch_flags[@]}" -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
   -Wall -Wextra -Wno-unused-parameter -Wno-deprecated-declarations \
   "$project_dir/tests/verify_native.m" -framework Foundation -framework AVFoundation \
   -framework CoreMedia -framework CoreVideo -framework CoreImage -framework CoreGraphics \

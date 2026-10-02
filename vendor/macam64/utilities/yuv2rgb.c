@@ -1,4 +1,5 @@
 /*
+ Modified for QuickCam Native by Christophe Lucas, 2026-10-02.
     macam - webcam app and QuickTime driver component
     Copyright (C) 2002 Matthias Krauss (macam@matthias-krauss.de)
 
@@ -20,7 +21,26 @@
 
 #include "yuv2rgb.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 #include <CoreFoundation/CFByteOrder.h>
+
+static inline uint32_t yuv_load_be32(const void *source) {
+    uint32_t value;
+    memcpy(&value, source, sizeof(value));
+    return CFSwapInt32BigToHost(value);
+}
+
+static inline uint16_t yuv_load_be16(const void *source) {
+    uint16_t value;
+    memcpy(&value, source, sizeof(value));
+    return CFSwapInt16BigToHost(value);
+}
+
+static inline void yuv_store_be32(void *destination, uint32_t value) {
+    value = CFSwapInt32HostToBig(value);
+    memcpy(destination, &value, sizeof(value));
+}
 
 //Lazy preprocessor generation of blitter code. For documentation, see "yuv2rgbPhilips.c".
 

@@ -1,4 +1,5 @@
 /*
+ Modified for QuickCam Native by Christophe Lucas, 2026-10-02.
  macam - webcam app and QuickTime driver component
  Copyright (C) 2002 Matthias Krauss (macam@matthias-krauss.de)
 
@@ -45,12 +46,13 @@ long x,y;					//loop counters
     dstRowBytes=4*bpp*width;
 #ifdef YUV2RGB_FLIP
     dstRowExtra+=2*dstRowBytes;			//From beginning to end of next line
+    dst+=dstRowBytes;
 #endif
     for (y=height;y;y--) {
         for (x=width;x;x--) {
 //Read from source buffer
-            ul1=CFSwapInt32HostToBig(*((unsigned  long*)(src))); src+=4;	//Read yuyv in line 1
-            ul2=CFSwapInt32HostToBig(*((unsigned  long*)(src))); src+=4;	//Read yuyv in line 1
+            ul1=yuv_load_be32(src); src+=4;	//Read yuyv in line 1
+            ul2=yuv_load_be32(src); src+=4;	//Read yuyv in line 1
 //Extract yuv pixel data
             y1 =(ul1&0xff000000)>>16;
             u1 =((ul1&0x00ff0000)>>16)-128;
@@ -149,27 +151,27 @@ long x,y;					//loop counters
 #ifdef YUV2RGB_FLIP
 #ifdef YUV2RGB_ALPHA
             dst-=16;
-            *((unsigned long*)(dst+12))=CFSwapInt32BigToHost(ul1);
-            *((unsigned long*)(dst+ 8))=CFSwapInt32BigToHost(ul2);
-            *((unsigned long*)(dst+ 4))=CFSwapInt32BigToHost(ul3);
-            *((unsigned long*)(dst   ))=CFSwapInt32BigToHost(ul4);
+            yuv_store_be32(dst+12, ul1);
+            yuv_store_be32(dst+ 8, ul2);
+            yuv_store_be32(dst+ 4, ul3);
+            yuv_store_be32(dst, ul4);
 #else	//YUV2RGB_ALPHA
             dst-=12;
-            *((unsigned long*)(dst+ 8))=CFSwapInt32BigToHost(ul1);
-            *((unsigned long*)(dst+ 4))=CFSwapInt32BigToHost(ul2);
-            *((unsigned long*)(dst   ))=CFSwapInt32BigToHost(ul3);
+            yuv_store_be32(dst+ 8, ul1);
+            yuv_store_be32(dst+ 4, ul2);
+            yuv_store_be32(dst, ul3);
 #endif	//YUV2RGB_ALPHA
 #else	//YUV2RGB_FLIP
 #ifdef YUV2RGB_ALPHA
-            *((unsigned long*)(dst))=CFSwapInt32BigToHost(ul1);
-            *((unsigned long*)(dst+4))=CFSwapInt32BigToHost(ul2);
-            *((unsigned long*)(dst+8))=CFSwapInt32BigToHost(ul3);
-            *((unsigned long*)(dst+12))=CFSwapInt32BigToHost(ul4);
+            yuv_store_be32(dst, ul1);
+            yuv_store_be32(dst+4, ul2);
+            yuv_store_be32(dst+8, ul3);
+            yuv_store_be32(dst+12, ul4);
             dst+=16;
 #else	//YUV2RGB_ALPHA
-            *((unsigned long*)(dst))=CFSwapInt32BigToHost(ul1);
-            *((unsigned long*)(dst+4))=CFSwapInt32BigToHost(ul2);
-            *((unsigned long*)(dst+8))=CFSwapInt32BigToHost(ul3);
+            yuv_store_be32(dst, ul1);
+            yuv_store_be32(dst+4, ul2);
+            yuv_store_be32(dst+8, ul3);
             dst+=12;
 #endif	//YUV2RGB_ALPHA
 #endif	//YUV2RGB_FLIP

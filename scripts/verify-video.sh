@@ -18,11 +18,13 @@ if [[ "$1" == '--help' || "$1" == '-h' ]]; then
 fi
 
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
+source "$project_dir/scripts/architectures.sh"
+quickcam_build_architectures
 verification_app="$project_dir/build/QuickCam Verification.app"
 verification_binary="$verification_app/Contents/MacOS/QuickCam Verification"
 mkdir -p "$verification_app/Contents/MacOS"
 
-xcrun clang -arch arm64 -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
+xcrun clang "${quickcam_arch_flags[@]}" -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
   -Wall -Wextra -Wno-unused-parameter -Wno-deprecated-declarations \
   "$project_dir/tests/verify_virtual.m" \
   -framework Cocoa -framework AVFoundation -framework CoreMedia \

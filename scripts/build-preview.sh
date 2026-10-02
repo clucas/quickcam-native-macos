@@ -1,10 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 camera_project="$(cd "$(dirname "$0")/.." && pwd)"
+source "$camera_project/scripts/architectures.sh"
+quickcam_build_architectures
 cd "$camera_project"
+quickcam_require_architectures build/libQuickCamCapture.a
+quickcam_require_architectures build/libmacam64.a
 camera_app="build/Legacy QuickCam.app"
 mkdir -p "$camera_app/Contents/MacOS" "$camera_app/Contents/Resources"
-clang -arch arm64 -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
+xcrun clang "${quickcam_arch_flags[@]}" -mmacosx-version-min=13.0 -fno-objc-arc -fblocks -O2 -g \
   -Wall -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -Iextension -Ihost \
   preview/main.m host/QCObsOutput.m build/libQuickCamCapture.a build/libmacam64.a \
   -ObjC -framework Cocoa -framework IOKit -framework Carbon -framework CoreMediaIO \

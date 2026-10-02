@@ -1,6 +1,6 @@
 # QuickCam Native for macOS
 
-QuickCam Native 0.2.2 makes two older Logitech USB webcams available as separate cameras to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
+QuickCam Native 0.3.0 makes two older Logitech USB webcams available as separate cameras to video applications, including Zoom and Google Meet. Its CoreMediaIO camera extension captures each webcam only while an application requests it. After activation, macOS manages the extension; the QuickCam host app does not need to remain open.
 
 This repository contains source code and build instructions. It does not include signed apps, certificates, provisioning profiles, or developer-account configuration. To install the native extension, build and sign it with your own Apple Developer Program account.
 
@@ -15,11 +15,13 @@ For the Pro 4000, the activity light follows capture. On each USB connection, th
 
 ## Requirements
 
-- An Apple silicon Mac. The build targets macOS 13 or later; hardware testing used an M4 Pro running macOS Tahoe.
+- An Intel or Apple silicon Mac. macOS 26 Tahoe is the primary target. The deployment minimum remains macOS 13, but earlier versions need separate validation.
 - Xcode or Apple's Command Line Tools, selected through `xcode-select`, with a macOS SDK, Swift, Clang, `libtool`, and `codesign`.
 - For native extension installation: a Developer ID Application signing certificate, a matching host provisioning profile with **System Extension** capability, and access to Apple's notarization service.
 
 The build uses the included source and Apple's frameworks. It needs no downloaded code dependencies. Native camera support does not require OBS.
+
+The default build produces universal binaries containing both `arm64` and `x86_64` code. Hardware capture has been tested on Apple silicon. Intel software tests can run under Rosetta on Apple silicon; capture and extension activation still need validation on a physical Intel Mac.
 
 ## Build and install the native extension
 
@@ -29,6 +31,16 @@ Clone [this repository](https://github.com/clucas/quickcam-native-macos), then r
 bash scripts/build-driver.sh
 bash scripts/build-extension.sh
 ```
+
+To build for one processor architecture, use the same `QUICKCAM_ARCHS` setting for each build step:
+
+```sh
+export QUICKCAM_ARCHS='x86_64' # Use arm64 for Apple silicon only.
+bash scripts/build-driver.sh
+bash scripts/build-extension.sh
+```
+
+Leave `QUICKCAM_ARCHS` unset, or set it to `arm64 x86_64`, for a universal build. Build the driver library again after changing architectures.
 
 Without signing settings, the result is an inspection build at `build/QuickCam Native.app`. Its installation button is disabled. An ad hoc signature does not satisfy system-extension activation requirements.
 
@@ -59,7 +71,18 @@ bash scripts/test-driver.sh
 bash scripts/test-extension.sh
 ```
 
-These cover the USB allowlist, hotplug registration, capture lifecycle, concurrent shutdown and registry access, reconnect recovery, activity-light control, exclusive USB ownership, and pixel conversion.
+Tests run for the host processor by default. On an Apple silicon Mac with Rosetta installed, run the Intel tests with:
+
+```sh
+QUICKCAM_TEST_ARCH=x86_64 bash scripts/test-driver.sh
+QUICKCAM_TEST_ARCH=x86_64 bash scripts/test-extension.sh
+```
+
+These tests verify Intel code through translation; they do not replace hardware testing on an Intel Mac.
+
+Run the driver suites one at a time. They rebuild the driver library for the selected test architecture. Before packaging a universal app, rerun `bash scripts/build-driver.sh` with `QUICKCAM_ARCHS` unset.
+
+These cover the USB allowlist, hotplug registration, capture lifecycle, concurrent shutdown and registry access, reconnect recovery, activity-light control, exclusive USB ownership, pixel conversion, and buffer boundaries.
 
 After activating the extension, verify both native camera entries:
 
@@ -96,7 +119,7 @@ bash scripts/build-preview.sh
 open "build/Legacy QuickCam.app"
 ```
 
-This preview build has an ad hoc signature. Local previews need no OBS installation. To share its selected feed, install official Apple silicon [OBS Studio](https://obsproject.com/download) version 30 or later and activate its virtual camera extension. In Legacy QuickCam, select a camera and click **Send to video apps**. Choose **OBS Virtual Camera** in your video app and keep Legacy QuickCam running. OBS itself may remain closed.
+This preview build has an ad hoc signature. Local previews need no OBS installation. To share its selected feed, install official [OBS Studio](https://obsproject.com/download) version 30 or later for your Mac's processor and activate its virtual camera extension. In Legacy QuickCam, select a camera and click **Send to video apps**. Choose **OBS Virtual Camera** in your video app and keep Legacy QuickCam running. OBS itself may remain closed.
 
 Both previews can run together, but OBS Virtual Camera carries one selected feed. Stop sharing before using OBS to produce that feed. After reconnecting a camera, start its preview again; reopen Legacy QuickCam if needed. Do not use the preview and native extension for the same camera at the same time.
 
@@ -104,7 +127,7 @@ To check the shared OBS feed, start sharing and run `bash scripts/verify-video.s
 
 ## Source layout
 
-- `vendor/macam64/`: camera protocols, decoders, and driver support, ported to ARM64.
+- `vendor/macam64/`: camera protocols, decoders, and driver support for 64-bit macOS.
 - `src/QuickCamCapture.m` and `extension/QuickCamCapture.h`: C capture API over the IOKit USB drivers.
 - `extension/`: CoreMediaIO devices, capture demand, reconnect handling, and frame delivery.
 - `host/main.swift`: native extension installation and removal.
@@ -123,7 +146,7 @@ This repository uses separate license scopes:
 
 See [the license overview](LICENSE), [the GPL text](vendor/macam64/COPYING.txt), and [third-party notices](host/NOTICE.txt).
 
-The vendored driver source is [smokris/macam64](https://github.com/smokris/macam64), based on commit [`8caa6f99f142c9e3741083546a49e63ec508043f`](https://github.com/smokris/macam64/commit/8caa6f99f142c9e3741083546a49e63ec508043f). It derives from the macam project and incorporates Philips/PWC and GSPCA camera protocols and decoders. This port builds the required classes for ARM64, restores the STX driver, restricts device matching, preserves active USB configurations, and synchronizes capture shutdown and registry access. Original copyright and license notices remain in the source tree.
+The vendored driver source is [smokris/macam64](https://github.com/smokris/macam64), based on commit [`8caa6f99f142c9e3741083546a49e63ec508043f`](https://github.com/smokris/macam64/commit/8caa6f99f142c9e3741083546a49e63ec508043f). It derives from the macam project and incorporates Philips/PWC and GSPCA camera protocols and decoders. This port builds the required classes for 64-bit macOS, restores the STX driver, restricts device matching, preserves active USB configurations, and synchronizes capture shutdown and registry access. Original copyright and license notices remain in the source tree.
 
 The OBS output adapter adapts discovery and queue handling from the MIT-licensed [`virtual_output.hpp` in pyvirtualcam v0.15.0](https://github.com/letmaik/pyvirtualcam/blob/v0.15.0/pyvirtualcam/native_macos_obs_cmioextension/virtual_output.hpp), by Sebastian Beckmann and Jannik Vogel. Its file-specific [MIT license](host/LICENSE-pyvirtualcam-MIT.txt) is included. No pyvirtualcam Python binding or libyuv implementation is required.
 
